@@ -41,15 +41,15 @@ func druidCRWriterNodeSpecReplicas(streams genericclioptions.IOStreams) *cobra.C
 	return cmd
 }
 
-func (sv *druidWriterCmd) druidCRWriterNodeSpecReplicasRun(nodeName, namespace, CR string, replica int64) error {
+func (sv *druidWriterCmd) druidCRWriterNodeSpecReplicasRun(nodeName, namespace, cr string, replica int64) error {
 
-	writerResult, err := di.writerDruidNodeSpecReplicas(nodeName, namespace, CR, replica)
+	writerResult, err := di.writerDruidNodeSpecReplicas(nodeName, namespace, cr, replica)
 	if err != nil {
 		return err
 	}
 
 	if writerResult {
-		_, err := fmt.Fprintf(sv.out, "Druid CR [%s],NodeName [%s] successfully updated in Namespace [%s] with Replica Count [%d]\n", CR, nodeName, namespace, replica)
+		_, err := fmt.Fprintf(sv.out, "Druid CR [%s],NodeName [%s] successfully updated in Namespace [%s] with Replica Count [%d]\n", cr, nodeName, namespace, replica)
 		if err != nil {
 			return err
 		}

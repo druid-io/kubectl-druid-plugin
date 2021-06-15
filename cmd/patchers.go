@@ -15,7 +15,7 @@ type druidPatcherCmd struct {
 }
 
 func druidCRPatcher(streams genericclioptions.IOStreams) *cobra.Command {
-	druidCmdList := &druidListCmd{
+	druidCmdList := &druidPatcherCmd{
 		out: streams.Out,
 	}
 
@@ -41,7 +41,7 @@ func druidCRPatcher(streams genericclioptions.IOStreams) *cobra.Command {
 	return cmd
 }
 
-func (sv *druidListCmd) druidCRPatcherRun(namespace, CR, deleteOrphanPvc, rollingDeploy string) error {
+func (sv *druidPatcherCmd) druidCRPatcherRun(namespace, CR, deleteOrphanPvc, rollingDeploy string) error {
 
 	if deleteOrphanPvc != "" {
 		b, _ := strconv.ParseBool(deleteOrphanPvc)

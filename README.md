@@ -36,7 +36,7 @@ kubectl druid scale --cr <cr> --namespace <namespace> --node middlemanager --rep
 
 - Update Image for a specific druid CR node in namespace
 ```
-kubectl druid update --CR <CR> --image <image> --namespace <namespace> --node broker
+kubectl druid update --cr <cr> --image <image> --namespace <namespace> --node broker
 ```
 
 - Patch Operation of CR Flags

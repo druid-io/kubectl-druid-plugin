@@ -9,12 +9,12 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-type druidWritererCmd struct {
+type druidWriterCmd struct {
 	out io.Writer
 }
 
 func druidCRWriterNodeSpecReplicas(streams genericclioptions.IOStreams) *cobra.Command {
-	druidCmdList := &druidListCmd{
+	writerCmd := &druidWriterCmd{
 		out: streams.Out,
 	}
 
@@ -28,7 +28,7 @@ func druidCRWriterNodeSpecReplicas(streams genericclioptions.IOStreams) *cobra.C
 			if len(args) != 0 {
 				return errors.New("this command does not accept arguments")
 			}
-			return druidCmdList.druidCRWriterNodeSpecReplicasRun(node, namespace, cr, replicas)
+			return writerCmd.druidCRWriterNodeSpecReplicasRun(node, namespace, cr, replicas)
 		},
 	}
 
@@ -41,7 +41,7 @@ func druidCRWriterNodeSpecReplicas(streams genericclioptions.IOStreams) *cobra.C
 	return cmd
 }
 
-func (sv *druidListCmd) druidCRWriterNodeSpecReplicasRun(nodeName, namespace, CR string, replica int64) error {
+func (sv *druidWriterCmd) druidCRWriterNodeSpecReplicasRun(nodeName, namespace, CR string, replica int64) error {
 
 	writerResult, err := di.writerDruidNodeSpecReplicas(nodeName, namespace, CR, replica)
 	if err != nil {
@@ -59,11 +59,11 @@ func (sv *druidListCmd) druidCRWriterNodeSpecReplicasRun(nodeName, namespace, CR
 }
 
 func druidCRWriterUpdates(streams genericclioptions.IOStreams) *cobra.Command {
-	druidCmdList := &druidListCmd{
+	writerCmd := &druidWriterCmd{
 		out: streams.Out,
 	}
 
-	var nodeName, namespace, CR, image string
+	var nodeName, namespace, cr, image string
 	cmd := &cobra.Command{
 		Use:          "update",
 		Short:        "update druid node images",
@@ -72,7 +72,7 @@ func druidCRWriterUpdates(streams genericclioptions.IOStreams) *cobra.Command {
 			if len(args) != 0 {
 				return errors.New("this command does not accept arguments")
 			}
-			return druidCmdList.druidCRWriterUpdatesRun(nodeName, namespace, CR, image)
+			return writerCmd.druidCRWriterUpdatesRun(nodeName, namespace, cr, image)
 		},
 	}
 
@@ -81,21 +81,21 @@ func druidCRWriterUpdates(streams genericclioptions.IOStreams) *cobra.Command {
 
 	f.StringVar(&nodeName, "node", "", "name of druid node created by the druid operator, can be a statefulset or deployment")
 
-	f.StringVar(&CR, "cr", "", "name of the druid CR")
+	f.StringVar(&cr, "cr", "", "name of the druid CR")
 	f.StringVar(&image, "image", "", "image of the druid node")
 
 	return cmd
 }
 
-func (sv *druidListCmd) druidCRWriterUpdatesRun(nodeName, namespace, CR, image string) error {
+func (sv *druidWriterCmd) druidCRWriterUpdatesRun(nodeName, namespace, cr, image string) error {
 
-	writerResult, err := di.writerDruidNodeImages(nodeName, namespace, CR, image)
+	writerResult, err := di.writerDruidNodeImages(nodeName, namespace, cr, image)
 	if err != nil {
 		return err
 	}
 
 	if writerResult {
-		_, err := fmt.Fprintf(sv.out, "Druid CR [%s],NodeName [%s] successfully update with image [%s] in Namespace [%s]\n", CR, nodeName, image, namespace)
+		_, err := fmt.Fprintf(sv.out, "Druid CR [%s],NodeName [%s] successfully update with image [%s] in Namespace [%s]\n", cr, nodeName, image, namespace)
 		if err != nil {
 			return err
 		}

@@ -3,18 +3,13 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"io"
 
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-type druidWriterCmd struct {
-	out io.Writer
-}
-
 func druidCRWriterNodeSpecReplicas(streams genericclioptions.IOStreams) *cobra.Command {
-	writerCmd := &druidWriterCmd{
+	writerCmd := &druidIoWriter{
 		out: streams.Out,
 	}
 
@@ -41,15 +36,15 @@ func druidCRWriterNodeSpecReplicas(streams genericclioptions.IOStreams) *cobra.C
 	return cmd
 }
 
-func (sv *druidWriterCmd) druidCRWriterNodeSpecReplicasRun(nodeName, namespace, cr string, replica int64) error {
+func (sv *druidIoWriter) druidCRWriterNodeSpecReplicasRun(node, namespace, cr string, replica int64) error {
 
-	writerResult, err := di.writerDruidNodeSpecReplicas(nodeName, namespace, cr, replica)
+	writerResult, err := di.writerDruidNodeSpecReplicas(node, namespace, cr, replica)
 	if err != nil {
 		return err
 	}
 
 	if writerResult {
-		_, err := fmt.Fprintf(sv.out, "Druid CR [%s],NodeName [%s] successfully updated in Namespace [%s] with Replica Count [%d]\n", cr, nodeName, namespace, replica)
+		_, err := fmt.Fprintf(sv.out, "Druid CR [%s], Node [%s] successfully updated in Namespace [%s] with Replica Count [%d]\n", cr, node, namespace, replica)
 		if err != nil {
 			return err
 		}
@@ -59,7 +54,7 @@ func (sv *druidWriterCmd) druidCRWriterNodeSpecReplicasRun(nodeName, namespace, 
 }
 
 func druidCRWriterUpdates(streams genericclioptions.IOStreams) *cobra.Command {
-	writerCmd := &druidWriterCmd{
+	writerCmd := &druidIoWriter{
 		out: streams.Out,
 	}
 
@@ -87,15 +82,15 @@ func druidCRWriterUpdates(streams genericclioptions.IOStreams) *cobra.Command {
 	return cmd
 }
 
-func (sv *druidWriterCmd) druidCRWriterUpdatesRun(nodeName, namespace, cr, image string) error {
+func (sv *druidIoWriter) druidCRWriterUpdatesRun(node, namespace, cr, image string) error {
 
-	writerResult, err := di.writerDruidNodeImages(nodeName, namespace, cr, image)
+	writerResult, err := di.writerDruidNodeImages(node, namespace, cr, image)
 	if err != nil {
 		return err
 	}
 
 	if writerResult {
-		_, err := fmt.Fprintf(sv.out, "Druid CR [%s],NodeName [%s] successfully update with image [%s] in Namespace [%s]\n", cr, nodeName, image, namespace)
+		_, err := fmt.Fprintf(sv.out, "Druid CR [%s], Node [%s] successfully update with image [%s] in Namespace [%s]\n", cr, node, image, namespace)
 		if err != nil {
 			return err
 		}

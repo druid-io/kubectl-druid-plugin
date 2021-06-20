@@ -3,7 +3,9 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"sort"
+	"text/tabwriter"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -11,6 +13,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 )
+
+type druidIoWriter struct {
+	out io.Writer
+	w   tabwriter.Writer
+}
 
 // GVK for Druid CR
 var GVK = schema.GroupVersionResource{
@@ -38,7 +45,6 @@ func NewPatchValue(op, path string, value interface{}) []byte {
 	return bytes
 }
 
-// dynamicInterface holds writers,reader and patcher interfaces
 type dynamicInterface interface {
 	writers
 	readers
@@ -47,20 +53,20 @@ type dynamicInterface interface {
 
 // readers interface
 type readers interface {
-	listDruidCR(namespaces string) ([]string, error)
-	getDruidNodeNames(namespaces, CR string) ([]string, error)
+	listDruidCR(namespace string) (map[string][]string, error)
+	getDruidNodeNames(namespaces, cr string) (map[string][]string, error)
 }
 
 // writers interface
 type writers interface {
-	writerDruidNodeSpecReplicas(nodeName, namespace, CR string, replica int64) (bool, error)
-	writerDruidNodeImages(nodeName, namespace, CR, image string) (bool, error)
+	writerDruidNodeSpecReplicas(nodeName, namespace, cr string, replica int64) (bool, error)
+	writerDruidNodeImages(nodeName, namespace, cr, image string) (bool, error)
 }
 
 // patchers interface
 type patcher interface {
-	patcherDruidDeleteOrphanPvc(namespace, CR string, value bool) (bool, error)
-	patcherDruidRollingDeploy(namespace, CR string, value bool) (bool, error)
+	patcherDruidDeleteOrphanPvc(namespace, cr string, value bool) (bool, error)
+	patcherDruidRollingDeploy(namespace, cr string, value bool) (bool, error)
 }
 
 // client struct holds the dynamic client
@@ -72,60 +78,62 @@ type client struct {
 var di dynamicInterface = client{newClient()}
 
 // getDruidNodeNames gets all the druid nodes in a namespace
-func (c client) getDruidNodeNames(namespaces, CR string) ([]string, error) {
+// response map[namespace][]nameNames
+func (c client) getDruidNodeNames(namespaces, cr string) (map[string][]string, error) {
 
 	var err error
 
-	druidNodeName, err := c.Resource(GVK).Namespace(namespaces).Get(context.TODO(), CR, v1.GetOptions{})
+	crd, err := c.Resource(GVK).Namespace(namespaces).Get(context.TODO(), cr, v1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	var names []string
+	var response = make(map[string][]string, 0)
 
-	nameLists, _, _ := unstructured.NestedMap(druidNodeName.Object, "spec", "nodes")
+	nameLists, _, _ := unstructured.NestedMap(crd.Object, "spec", "nodes")
 	for nameList := range nameLists {
-		names = append(names, nameList)
-		sort.Strings(names)
+		response[crd.GetNamespace()] = append(response[crd.GetNamespace()], nameList)
 	}
 
-	return names, nil
+	sort.Strings(response[crd.GetNamespace()])
+
+	return response, nil
 
 }
 
 // listDruidCR lists all the druid CR in a namespace or all namespaces
-func (c client) listDruidCR(namespaces string) ([]string, error) {
+// response map[namespace][]nameCR
+func (c client) listDruidCR(namespace string) (map[string][]string, error) {
 
 	var err error
 
-	druidList, err := c.Resource(GVK).Namespace(namespaces).List(context.TODO(), v1.ListOptions{})
+	crd, err := c.Resource(GVK).Namespace(namespace).List(context.TODO(), v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	var names []string
-	for _, d := range druidList.Items {
-		names = append(names, d.GetName())
-		sort.Strings(names)
+	var response = make(map[string][]string, 0)
+	for _, d := range crd.Items {
+		response[d.GetNamespace()] = append(response[d.GetNamespace()], d.GetName())
 	}
 
-	return names, nil
+	return response, nil
 
 }
 
 // writerNodeSpecReplicas writer nodespec replica
-func (c client) writerDruidNodeSpecReplicas(nodeName, namespace, CR string, replica int64) (bool, error) {
+func (c client) writerDruidNodeSpecReplicas(nodeName, namespace, cr string, replica int64) (bool, error) {
 	var err error
-	cr, err := c.Resource(GVK).Namespace(namespace).Get(context.TODO(), CR, v1.GetOptions{})
+	dcr, err := c.Resource(GVK).Namespace(namespace).Get(context.TODO(), cr, v1.GetOptions{})
 	if err != nil {
 		return false, err
 	}
 
-	if err := unstructured.SetNestedField(cr.Object, int64(replica), "spec", "nodes", nodeName, "replicas"); err != nil {
+	if err := unstructured.SetNestedField(dcr.Object, int64(replica), "spec", "nodes", nodeName, "replicas"); err != nil {
 		return false, err
 	}
 
-	_, err = c.Resource(GVK).Namespace(namespace).Update(context.TODO(), cr, v1.UpdateOptions{})
+	_, err = c.Resource(GVK).Namespace(namespace).Update(context.TODO(), dcr, v1.UpdateOptions{})
 	if err != nil {
 		return false, err
 	}
@@ -134,19 +142,19 @@ func (c client) writerDruidNodeSpecReplicas(nodeName, namespace, CR string, repl
 }
 
 // writerDruidNodeImages writers updates nodes images
-func (c client) writerDruidNodeImages(nodeName, namespace, CR, image string) (bool, error) {
+func (c client) writerDruidNodeImages(nodeName, namespace, cr, image string) (bool, error) {
 	var err error
 
-	cr, err := c.Resource(GVK).Namespace(namespace).Get(context.TODO(), CR, v1.GetOptions{})
+	dcr, err := c.Resource(GVK).Namespace(namespace).Get(context.TODO(), cr, v1.GetOptions{})
 	if err != nil {
 		return false, err
 	}
 
-	if err := unstructured.SetNestedField(cr.Object, image, "spec", "nodes", nodeName, "image"); err != nil {
+	if err := unstructured.SetNestedField(dcr.Object, image, "spec", "nodes", nodeName, "image"); err != nil {
 		return false, err
 	}
 
-	_, err = c.Resource(GVK).Namespace(namespace).Update(context.TODO(), cr, v1.UpdateOptions{})
+	_, err = c.Resource(GVK).Namespace(namespace).Update(context.TODO(), dcr, v1.UpdateOptions{})
 	if err != nil {
 		return false, err
 	}
@@ -155,12 +163,12 @@ func (c client) writerDruidNodeImages(nodeName, namespace, CR, image string) (bo
 }
 
 // patcherDruidDeleteOrphanPvc patches DeleteOrphanPvc flag
-func (c client) patcherDruidDeleteOrphanPvc(namespace, CR string, value bool) (bool, error) {
+func (c client) patcherDruidDeleteOrphanPvc(namespace, cr string, value bool) (bool, error) {
 	var err error
 
 	patchBytes := NewPatchValue("replace", "/spec/deleteOrphanPvc", value)
 
-	_, err = c.Resource(GVK).Namespace(namespace).Patch(context.TODO(), CR, types.JSONPatchType, patchBytes, v1.PatchOptions{})
+	_, err = c.Resource(GVK).Namespace(namespace).Patch(context.TODO(), cr, types.JSONPatchType, patchBytes, v1.PatchOptions{})
 	if err != nil {
 		return false, err
 	}
@@ -169,12 +177,12 @@ func (c client) patcherDruidDeleteOrphanPvc(namespace, CR string, value bool) (b
 }
 
 // patcherDruidRollingDeploy patches rollingDeploy flag
-func (c client) patcherDruidRollingDeploy(namespace, CR string, value bool) (bool, error) {
+func (c client) patcherDruidRollingDeploy(namespace, cr string, value bool) (bool, error) {
 	var err error
 
 	patchBytes := NewPatchValue("replace", "/spec/rollingDeploy", value)
 
-	_, err = c.Resource(GVK).Namespace(namespace).Patch(context.TODO(), CR, types.JSONPatchType, patchBytes, v1.PatchOptions{})
+	_, err = c.Resource(GVK).Namespace(namespace).Patch(context.TODO(), cr, types.JSONPatchType, patchBytes, v1.PatchOptions{})
 	if err != nil {
 		return false, err
 	}

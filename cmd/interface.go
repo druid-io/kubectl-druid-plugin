@@ -54,7 +54,7 @@ type dynamicInterface interface {
 // readers interface
 type readers interface {
 	listDruidCR(namespace string) (map[string][]string, error)
-	getDruidNodeNames(namespaces, cr string) (map[string][]string, error)
+	getDruidNodeNames(namespace, cr string) (map[string][]string, error)
 }
 
 // writers interface

@@ -3,19 +3,14 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"io"
 	"strconv"
 
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-type druidPatcherCmd struct {
-	out io.Writer
-}
-
 func druidCRPatcher(streams genericclioptions.IOStreams) *cobra.Command {
-	druidCmdList := &druidPatcherCmd{
+	druidCmdList := &druidIoWriter{
 		out: streams.Out,
 	}
 
@@ -33,15 +28,15 @@ func druidCRPatcher(streams genericclioptions.IOStreams) *cobra.Command {
 	}
 
 	f := cmd.Flags()
-	f.StringVar(&namespace, "namespace", "", "namespace of druid CR")
+	f.StringVarP(&namespace, "namespace", "n", "", "namespace of druid CR")
 	f.StringVar(&cr, "cr", "", "name of the druid CR")
-	f.StringVar(&deleteOrphanPvc, "deleteOrphanPvc", "", "deleteOrphanPvc is a bool, enabling to true will lead to delete of orphan pvc")
-	f.StringVar(&rollingDeploy, "rollingDeploy", "", "rollingDeploy is a bool, enabling to true will lead to sequential rolling upgrades")
+	f.StringVar(&deleteOrphanPvc, "deleteOrphanPvc", "", "deleteOrphanPvc, enabling to true will lead to delete of orphan pvc")
+	f.StringVar(&rollingDeploy, "rollingDeploy", "", "rollingDeploy, enabling to true will lead to sequential rolling upgrades")
 
 	return cmd
 }
 
-func (sv *druidPatcherCmd) druidCRPatcherRun(namespace, CR, deleteOrphanPvc, rollingDeploy string) error {
+func (sv *druidIoWriter) druidCRPatcherRun(namespace, CR, deleteOrphanPvc, rollingDeploy string) error {
 
 	if deleteOrphanPvc != "" {
 		b, _ := strconv.ParseBool(deleteOrphanPvc)

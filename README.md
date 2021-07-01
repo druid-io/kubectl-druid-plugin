@@ -44,3 +44,8 @@ kubectl druid update --cr <cr> --image <image> --namespace <namespace> --node br
 kubectl druid patch --cr <cr> --namespace <namespace> --deleteOrphanPvc true
 kubectl druid patch --cr <cr> --namespace <namespace> --rollingDeploy true
 ```
+
+- Shorthand supported
+```
+- n for namespace
+```

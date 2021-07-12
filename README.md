@@ -51,4 +51,4 @@ kubectl druid patch --cr <cr> --namespace <namespace> --rollingDeploy true
 ```
 
 ## Note
-- Apache®, Apache Druid, Druid® are either registered trademarks or trademarks of the Apache    Software Foundation in the United States and/or other countries. This project, kubectl-druid-plugin, is not an Apache Software Foundation project.
+- Apache®, Apache Druid, Druid® are either registered trademarks or trademarks of the Apache Software Foundation in the United States and/or other countries. This project, kubectl-druid-plugin, is not an Apache Software Foundation project.

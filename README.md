@@ -1,9 +1,9 @@
 ## kubectl-druid-plugin
-- Kubectl plugin to simplify operations on druid CR.
+- Kubectl plugin to simplify operations on apache druid CR.
 
 ## Prerequisite
-- Druid CRD defination to be installed.
-- A druid CR managed druid cluster running. 
+- Apache Druid CRD defination to be installed.
+- An apache druid CR managed apache druid cluster running. 
 - https://github.com/druid-io/druid-operator/tree/master/deploy/crds
 
 ## Getting Started
@@ -49,3 +49,6 @@ kubectl druid patch --cr <cr> --namespace <namespace> --rollingDeploy true
 ```
 - n for namespace
 ```
+
+## Note
+- Apache®, Apache Druid, Druid® are either registered trademarks or trademarks of the Apache       Software Foundation in the United States and/or other countries. This project, kubectl-druid-plugin, is not an Apache Software Foundation project.

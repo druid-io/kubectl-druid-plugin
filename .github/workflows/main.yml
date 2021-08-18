@@ -1,0 +1,13 @@
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build kubectl druid plugin
+    steps:
+      - name: Build using Docker
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: false
+          tags: kubectl-druid:latest

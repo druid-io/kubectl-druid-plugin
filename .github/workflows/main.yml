@@ -5,6 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Build kubectl druid plugin
     steps:
+      - uses: actions/checkout@v2
       - name: Build using Docker
         uses: docker/build-push-action@v2
         with:

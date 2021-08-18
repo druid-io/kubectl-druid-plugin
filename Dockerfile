@@ -9,6 +9,6 @@ WORKDIR /go/src/
 COPY . .
 
 RUN echo "==> Building..." && \
-    gox -output="pkg/{{.OS}}_{{.Arch}}/kubectl-druid" \
+    gox -output="pkg/kubectl-druid-{{.OS}}-{{.Arch}}" \
         -os="darwin linux" \
         -arch="amd64"

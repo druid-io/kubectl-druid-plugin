@@ -13,6 +13,6 @@ jobs:
       - name: Upload the artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: artifacts
+          name: kubectl-druid
           path: |
             build/pkg/

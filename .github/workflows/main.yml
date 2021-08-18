@@ -6,9 +6,5 @@ jobs:
     name: Build kubectl druid plugin
     steps:
       - uses: actions/checkout@v2
-      - name: Build using Docker
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          push: false
-          tags: kubectl-druid:latest
+      - run: make build
+        shell: bash

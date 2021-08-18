@@ -12,6 +12,17 @@
 - ```mv kubectl-druid /usr/local/bin```
 - ```kubectl druid --help```
 
+#### Build using Docker
+
+- ```make build```
+- ```mv build/pkg/kubectl-druid-${OS}-${ARCH} /usr/local/bin/kubectl-druid```
+- ```kubectl druid --help```
+
+#### Download the artifacts
+
+- Go to Github Actions
+- Download the artifact zip file.
+
 ## Commands
 
 - List All Druid CR's in a k8s cluster

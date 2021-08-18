@@ -5,6 +5,14 @@ jobs:
     runs-on: ubuntu-latest
     name: Build kubectl druid plugin
     steps:
-      - uses: actions/checkout@v2
-      - run: make build
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
+        run: make build
         shell: bash
+      - name: Upload the artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: artifacts
+          path: |
+            build/pkg/
